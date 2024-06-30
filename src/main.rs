@@ -13,6 +13,7 @@ use std::sync::Mutex;
 
 pub mod api;
 pub mod error;
+pub mod misc;
 pub mod model;
 pub mod predicate_dsl;
 pub mod utils;
