@@ -14,3 +14,4 @@ once_cell = "1.*"
 chrono = { version = "0.4", features = ["serde"] }
 log = "0.4"
 simple_logger = { version = "5", features = ["timestamps"]}
+clap = {version = "4.*", features = ["derive"]}

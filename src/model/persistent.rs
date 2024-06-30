@@ -5,12 +5,13 @@ use crate::predicate_dsl::json::JsonPredicate;
 use crate::predicate_dsl::keyword::Keyword;
 use crate::utils::js::optic::JsonOptic;
 use chrono::{DateTime, Utc};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::time::Duration;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "mode")]
 pub enum HttpStubRequest {
     #[serde(rename = "no_body")]
@@ -101,7 +102,7 @@ impl HttpStubRequest {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "mode")]
 pub enum HttpStubResponse {
     #[serde(rename = "raw")]
@@ -123,30 +124,38 @@ pub enum HttpStubResponse {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HttpStub {
-    pub id: i32,
     pub created: DateTime<Utc>,
     pub scope: Scope,
+    #[serde(default)]
     pub times: Option<i64>,
     pub service_suffix: String,
     pub name: String,
     pub method: HttpMethod,
+    #[serde(default)]
     pub path: Option<String>,
-    pub path_pattern: Option<String>,
+    #[serde(with = "serde_regex")]
+    #[serde(default)]
+    pub path_pattern: Option<Regex>,
+    #[serde(default)]
     pub seed: Option<Value>,
+    #[serde(default)]
     pub state: Option<HashMap<JsonOptic, HashMap<SqlKeyword, Value>>>,
     pub request: HttpStubRequest,
+    #[serde(default)]
     pub persist: Option<HashMap<JsonOptic, Value>>,
     pub response: HttpStubResponse,
+    #[serde(default)]
     pub callback: Option<Callback>
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum CallbackResponseMode {
     Json
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "mode")]
 pub enum CallbackRequest {
     #[serde(rename = "no_body")]
@@ -171,7 +180,7 @@ pub enum CallbackRequest {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Callback {
     HttpCallback {
         request: CallbackRequest,
@@ -191,7 +200,6 @@ pub enum Callback {
 }
 
 pub struct State {
-    pub id: i32,
     pub created: DateTime<Utc>,
     pub data: Value
 }

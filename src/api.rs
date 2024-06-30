@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 pub mod exec;
 pub mod model;
+pub mod resolver;
 
 #[derive(Deserialize)]
 pub struct PathInfo {

@@ -4,7 +4,7 @@ pub mod persistent;
 pub mod sql_json;
 
 #[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Scope {
     Persistent,
@@ -13,7 +13,7 @@ pub enum Scope {
 }
 
 #[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum HttpMethod {
     Get,

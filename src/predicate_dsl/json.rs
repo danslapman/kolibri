@@ -11,6 +11,7 @@ use std::fmt::{Debug, Formatter};
 type Spec = HashMap<JsonOptic, HashMap<Keyword, Value>>;
 type Condition<'r> = (&'r Keyword, &'r Value);
 
+#[derive(Clone)]
 pub struct JsonPredicate {
     definition: Spec
 }
