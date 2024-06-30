@@ -1,6 +1,5 @@
 use crate::api::model::RequestBody;
 use crate::model::*;
-use crate::model::sql_json::Keyword as SqlKeyword;
 use crate::predicate_dsl::json::JsonPredicate;
 use crate::predicate_dsl::keyword::Keyword;
 use crate::utils::js::optic::JsonOptic;
@@ -141,7 +140,7 @@ pub struct HttpStub {
     #[serde(default)]
     pub seed: Option<Value>,
     #[serde(default)]
-    pub state: Option<HashMap<JsonOptic, HashMap<SqlKeyword, Value>>>,
+    pub state: Option<HashMap<JsonOptic, HashMap<Keyword, Value>>>,
     pub request: HttpStubRequest,
     #[serde(default)]
     pub persist: Option<HashMap<JsonOptic, Value>>,

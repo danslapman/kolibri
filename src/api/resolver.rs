@@ -1,6 +1,8 @@
 use crate::api::model::RequestBody;
 use crate::error::Error;
 use crate::model::*;
+use crate::predicate_dsl::keyword::Keyword;
+use crate::utils::js::optic::JsonOptic;
 use log::info;
 use persistent::{HttpStub, State};
 use serde_json::Value;
@@ -11,6 +13,8 @@ pub struct StubResolver {
     mocks: Vec<HttpStub>,
     states: Mutex<Vec<State>>
 }
+
+type StateSpec = HashMap<JsonOptic, HashMap<Keyword, Value>>;
 
 impl StubResolver {
     pub fn new(mocks: Vec<HttpStub>, states: Mutex<Vec<State>>) -> StubResolver {

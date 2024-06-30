@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 pub mod persistent;
-pub mod sql_json;
 
 #[derive(Debug)]
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
