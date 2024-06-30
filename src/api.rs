@@ -9,12 +9,12 @@ pub struct PathInfo {
     path: String
 }
 
-#[get("/api/rustybird/exec/{path:.*}")]
+#[get("/api/kolibri/exec/{path:.*}")]
 pub async fn exec_get(req: HttpRequest) -> impl Responder {
     HttpResponse::Ok().body(format!("{}", req.path()))
 }
 
-#[post("/api/rustybird/exec/{path:.*}")]
+#[post("/api/kolibri/exec/{path:.*}")]
 pub async fn exec_post(path: web::Path<PathInfo>, body: String) -> impl Responder {
     HttpResponse::Ok().body(format!("{} {}", path.path, body))
 }
