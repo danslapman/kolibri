@@ -1,0 +1,8 @@
+.DS_Store
+.env
+.fleet
+.idea
+/target
+Cargo.lock
+*.iml
+*.csv
