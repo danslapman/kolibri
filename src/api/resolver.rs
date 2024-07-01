@@ -1,9 +1,10 @@
 use crate::api::model::RequestBody;
 use crate::error::Error;
+use crate::misc::{Renderable, Substitute};
 use crate::model::*;
 use crate::predicate_dsl::keyword::Keyword;
 use crate::utils::js::optic::JsonOptic;
-use log::info;
+use log::{error, info};
 use persistent::{HttpStub, State};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -21,7 +22,7 @@ impl StubResolver {
         StubResolver { mocks, states }
     }
 
-    fn find_stub_and_state(&self, in_scope: Scope, with_method: HttpMethod, with_path: String, with_headers: HashMap<String, String>, query_object: Value, body: RequestBody) -> Result<Option<HttpStub>, Error> {
+    fn find_stub_and_state(&self, in_scope: Scope, with_method: HttpMethod, with_path: String, with_headers: HashMap<String, String>, query_object: Value, body: RequestBody) -> Result<Option<(HttpStub, Option<State>)>, Error> {
         info!("Searching searching stubs for {:?} of scope {:?}", with_path, in_scope);
 
         let candidates0: Vec<HttpStub> = self.mocks.clone().into_iter()
@@ -57,6 +58,33 @@ impl StubResolver {
             return Err(Error::new(format!("There are no {:?} candidates in scope {:?} after body check", with_path, in_scope)));
         }
 
-        Ok(None)
+        let candidates4: Vec<(HttpStub, Vec<State>)> = candidates3.into_iter().map(|s| {
+            //TODO: state search
+            (s, vec![])
+        }).collect();
+
+        if candidates4.iter().any(|(_, states)| states.len() > 1) {
+            error!("For one or more stubs, multiple suitable states were found");
+            return Err(Error::new("For one or more stubs, multiple suitable states were found".to_string()));
+        }
+
+        if candidates4.iter().filter(|(_, states)| !states.is_empty()).count() > 1 {
+            error!("For more than one stub, suitable states were found");
+            return Err(Error::new("For more than one stub, suitable states were found".to_string()));
+        }
+
+        if candidates4.len() > 1 && candidates4.iter().all(|(stub, states)| stub.state.is_some() && states.is_empty()) {
+            error!("No suitable state found for any stub");
+            return Err(Error::new("No suitable state found for any stub".to_string()));
+        }
+
+        if candidates4.len() > 1 && candidates4.iter().all(|(stub, _)| stub.state.is_none()) {
+            error!("More than one stateless stub found");
+            return Err(Error::new("More than one stateless stub found".to_string()));
+        }
+
+        let res = candidates4.iter().find(|(_, states)| states.len() == 1).or(candidates4.iter().find(|(stub, _)| stub.state.is_none()));
+
+        Ok(res.map(|(stub, states)| (stub.clone(), states.first().map(|s| s.clone()))))
     }
 }

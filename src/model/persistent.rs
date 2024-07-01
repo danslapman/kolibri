@@ -198,6 +198,7 @@ pub enum Callback {
     }
 }
 
+#[derive(Clone)]
 pub struct State {
     pub created: DateTime<Utc>,
     pub data: Value
