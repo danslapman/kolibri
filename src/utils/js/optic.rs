@@ -36,22 +36,7 @@ impl JsonOptic {
 
     pub fn from_path(path_str: &str) -> JsonOptic {
         JsonOptic {
-            json_path: path_str.split('.').map(|s| match s {
-                "$" => PathPart::Traverse,
-                i if INDEX_PATTERN.is_match(i) => {
-                    if let Some(index_cap) = INDEX_PATTERN.captures(i) {
-                        let cap1 = &index_cap[1];
-                        if let Ok(idx) = cap1.parse::<usize>() {
-                            PathPart::Index(idx)
-                        } else {
-                            PathPart::Field(i.to_string())
-                        }
-                    } else {
-                        PathPart::Field(i.to_string())
-                    }
-                },
-                s => PathPart::Field(s.to_string())
-            }).collect::<Vec<_>>()
+            json_path: JsonOptic::parse_path(path_str)
         }
     }
 
@@ -85,6 +70,38 @@ impl JsonOptic {
                 .join(".")
                 .replace(".[", "[")
         )
+    }
+
+    pub fn prepend_path(mut self, path_str: &str) -> JsonOptic {
+        let mut new_path = JsonOptic::parse_path(path_str);
+        new_path.append(&mut self.json_path);
+        self.json_path = new_path;
+        self
+    }
+
+    pub fn append_path(mut self, path_str: &str) -> JsonOptic {
+        let mut new_part = JsonOptic::parse_path(path_str);
+        self.json_path.append(&mut new_part);
+        self
+    }
+
+    fn parse_path(path_str: &str) -> Vec<PathPart> {
+        path_str.split('.').map(|s| match s {
+            "$" => PathPart::Traverse,
+            i if INDEX_PATTERN.is_match(i) => {
+                if let Some(index_cap) = INDEX_PATTERN.captures(i) {
+                    let cap1 = &index_cap[1];
+                    if let Ok(idx) = cap1.parse::<usize>() {
+                        PathPart::Index(idx)
+                    } else {
+                        PathPart::Field(i.to_string())
+                    }
+                } else {
+                    PathPart::Field(i.to_string())
+                }
+            },
+            s => PathPart::Field(s.to_string())
+        }).collect::<Vec<_>>()
     }
 }
 
@@ -397,5 +414,23 @@ mod optic_tests {
 
         assert_eq!(optic1.to_json_path_string(), "$.track.segments[0].location");
         assert_eq!(optic2.to_json_path_string(), "$.track.segments[*].location");
+    }
+
+    #[test]
+    fn prepend_path_adds_path_to_the_beginning() {
+        let mut optic = JsonOptic::from_path("outer.inner");
+
+        optic = optic.prepend_path("newPart");
+
+        assert_eq!(optic.to_string(), "newPart.outer.inner");
+    }
+
+    #[test]
+    fn append_path_adds_path_to_the_beginning() {
+        let mut optic = JsonOptic::from_path("outer.inner");
+
+        optic = optic.append_path("newPart");
+
+        assert_eq!(optic.to_string(), "outer.inner.newPart");
     }
 }
