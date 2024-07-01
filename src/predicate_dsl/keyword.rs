@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Formatter};
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
+#[derive(Clone, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub enum Keyword {
     #[serde(rename = "==")]
     Equals,
@@ -26,4 +27,42 @@ pub enum Keyword {
     NotIn,
     #[serde(rename = "&[_]")]
     AllIn
+}
+
+impl Debug for Keyword {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Equals => write!(f, "=="),
+            Self::NotEq => write!(f, "!="),
+            Self::Greater => write!(f, ">"),
+            Self::Gte => write!(f, ">="),
+            Self::Less => write!(f, "<"),
+            Self::Lte => write!(f, "<="),
+            Self::Rx => write!(f, "~="),
+            Self::Size => write!(f, "size"),
+            Self::Exists => write!(f, "exists"),
+            Self::In => write!(f, "[_]"),
+            Self::NotIn => write!(f, "![_]"),
+            Self::AllIn => write!(f, "&[_]"),
+        }
+    }
+}
+
+impl Display for Keyword {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Equals => write!(f, "=="),
+            Self::NotEq => write!(f, "!="),
+            Self::Greater => write!(f, ">"),
+            Self::Gte => write!(f, ">="),
+            Self::Less => write!(f, "<"),
+            Self::Lte => write!(f, "<="),
+            Self::Rx => write!(f, "~="),
+            Self::Size => write!(f, "size"),
+            Self::Exists => write!(f, "exists"),
+            Self::In => write!(f, "[_]"),
+            Self::NotIn => write!(f, "![_]"),
+            Self::AllIn => write!(f, "&[_]"),
+        }
+    }
 }
