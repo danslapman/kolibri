@@ -3,7 +3,7 @@ use crate::model::HttpMethod;
 use crate::model::persistent::HttpStubResponse;
 use actix_http::header::HeaderMap;
 use actix_web::{get, post, HttpResponse, HttpRequest, Responder, ResponseError, Result};
-use actix_web::web::Data;
+use actix_web::web::{Data, Query};
 use exec::ExecHandler;
 use http::StatusCode;
 use model::RequestBody;
@@ -21,7 +21,7 @@ pub async fn exec_get(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Resu
         HttpMethod::Get, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
-        Value::Null, 
+        query_string_to_json_value(req.query_string())?, 
         RequestBody::AbsentRequestBody
     )?;
 
@@ -33,13 +33,13 @@ pub async fn exec_get(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Resu
 }
 
 #[post("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_post(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_post(req: HttpRequest, body: String, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Get, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
-        Value::Null, 
-        RequestBody::AbsentRequestBody
+        query_string_to_json_value(req.query_string())?,
+        RequestBody::SimpleRequestBody { value: body }
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -48,6 +48,10 @@ pub async fn exec_post(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Res
 
     Ok(response_to_responder(resp))
 }
+
+// ---- private stuff ----
+
+impl ResponseError for Error { }
 
 fn response_to_responder(stub_response: HttpStubResponse) -> impl Responder {
     match stub_response {
@@ -79,4 +83,9 @@ fn headermap_to_hashmap(headermap: &HeaderMap) -> HashMap<String, String> {
         .collect()
 }
 
-impl ResponseError for Error { }
+fn query_string_to_json_value(query_string: &str) -> Result<Value, Error> {
+    let params = Query::<Vec<(String, String)>>::from_query(query_string)
+        .map_err(|e| Error::from(format!("{}", e)))?.0;
+
+    Ok(Value::from_iter(params.into_iter().map(|(key, value)| (key, serde_json::from_str(value.as_str()).unwrap_or(Value::String(value)) ))))
+} 
