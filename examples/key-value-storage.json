@@ -1,0 +1,72 @@
+[
+    {
+        "pathPattern": "/kvs/(?P<id>\\d+)",
+        "name": "Persistent HTTP Stub",
+        "method": "GET",
+        "scope": "persistent",
+        "request": {
+            "mode": "no_body",
+            "headers": {}
+        },
+        "state": {
+            "id": {"==": "${__segments.id}"} 
+        },
+        "response": {
+            "mode": "json",
+            "body": "${state}",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "code": 200
+        }
+    },
+    {
+        "pathPattern": "/kvs/(?P<id>\\d+)",
+        "name": "Persistent HTTP Stub",
+        "method": "POST",
+        "scope": "persistent",
+        "request": {
+            "mode": "jlens",
+            "body": {},
+            "headers": {}
+        },
+        "persist": {
+            "id": "${pathParts.id}",
+            "data": "${req}"
+        },
+        "response": {
+            "mode": "json",
+            "body": {"state": "saved"},
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "code": 200
+        }
+    },
+    {
+        "pathPattern": "/kvs/(?P<id>\\d+)",
+        "name": "Persistent HTTP Stub",
+        "method": "POST",
+        "scope": "persistent",
+        "request": {
+            "mode": "jlens",
+            "body": {},
+            "headers": {}
+        },
+        "state": {
+            "id": {"==": "${__segments.id}"} 
+        },
+        "persist": {
+            "id": "${pathParts.id}",
+            "data": "${req}"
+        },
+        "response": {
+            "mode": "json",
+            "body": {"state": "updated"},
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "code": 200
+        }
+    }
+]

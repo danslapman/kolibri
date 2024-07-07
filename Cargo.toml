@@ -19,3 +19,5 @@ chrono = { version = "0.4", features = ["serde"] }
 log = "0.4"
 simple_logger = { version = "5", features = ["timestamps"]}
 clap = { version = "4.*", features = ["derive"]}
+uuid = { version = "1", features = ["v4"]}
+json_value_merge = "2"

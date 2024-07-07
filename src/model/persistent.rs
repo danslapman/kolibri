@@ -7,9 +7,10 @@ use crate::utils::js::optic::JsonOptic;
 use chrono::{DateTime, Utc};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::time::Duration;
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "mode")]
@@ -236,6 +237,17 @@ pub enum Callback {
 
 #[derive(Clone)]
 pub struct State {
+    pub id: Uuid,
     pub created: DateTime<Utc>,
     pub data: Value
+}
+
+impl State {
+    pub fn fresh() -> State {
+        State {
+            id: Uuid::new_v4(),
+            created: Utc::now(),
+            data: json!({})
+        }
+    }
 }

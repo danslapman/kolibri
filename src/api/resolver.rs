@@ -9,14 +9,15 @@ use persistent::{HttpStub, State};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 pub struct StubResolver {
     mocks: Vec<HttpStub>,
-    states: RwLock<Vec<State>>
+    states: RwLock<HashMap<Uuid, State>>
 }
 
 impl StubResolver {
-    pub fn new(mocks: Vec<HttpStub>, states: RwLock<Vec<State>>) -> StubResolver {
+    pub fn new(mocks: Vec<HttpStub>, states: RwLock<HashMap<Uuid, State>>) -> StubResolver {
         StubResolver { mocks, states }
     }
 
@@ -31,7 +32,7 @@ impl StubResolver {
             .collect();
 
         if candidates0.is_empty() {
-            info!("Stubs for {:?} not found in scope {:?}", with_path, in_scope);
+            info!("Stubs for {:?} were not found in scope {:?}", with_path, in_scope);
             return Ok(None);
         }
 
@@ -79,7 +80,7 @@ impl StubResolver {
                 }
                 let predicate = JsonPredicate::from_spec(state_spec);
 
-                for state in self.states.read().await.iter() {
+                for state in self.states.read().await.values() {
                     match predicate.validate(state.data.clone()) {
                         Ok(true) => matching_states.push(state.clone()),
                         Ok(false) => (),
@@ -114,5 +115,11 @@ impl StubResolver {
         let res = candidates4.iter().find(|(_, states)| states.len() == 1).or(candidates4.iter().find(|(stub, _)| stub.state.is_none()));
 
         Ok(res.map(|(stub, states)| (stub.clone(), states.first().map(|s| s.clone()))))
+    }
+
+    //TODO: move to a separate abstraction?
+    pub async fn upsert_state(&self, state: State) {
+        let mut states = self.states.write().await;
+        states.insert(state.id, state);
     }
 }

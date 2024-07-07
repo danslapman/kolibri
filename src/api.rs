@@ -52,7 +52,7 @@ pub async fn exec_head(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<E
 #[post("/api/kolibri/exec/{path:.*}")]
 pub async fn exec_post(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
-        HttpMethod::Get, 
+        HttpMethod::Post, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,

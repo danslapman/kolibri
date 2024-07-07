@@ -7,9 +7,11 @@ use actix_web::{App, HttpServer};
 use actix_web::web::Data;
 use clap::Parser;
 use simple_logger::SimpleLogger;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 pub mod api;
 pub mod error;
@@ -39,7 +41,7 @@ async fn main() -> std::io::Result<()> {
 
     let mocks = serde_json::from_str::<Vec<HttpStub>>(&mock_file_contents)?;
 
-    let states: Vec<State> = Vec::new();
+    let states: HashMap<Uuid, State> = HashMap::new();
 
     let stub_resolver = StubResolver::new(mocks, RwLock::new(states));
 
