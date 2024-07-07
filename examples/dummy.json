@@ -1,20 +1,38 @@
 [
-    {
-        "path": "/alpha/handler1",
-        "name": "Persistent HTTP Stub",
-        "method": "GET",
-        "scope": "persistent",
-        "request": {
-          "mode": "no_body",
-          "headers": {}
-        },
-        "response": {
-          "mode": "raw",
-          "body": "persistent scope",
-          "headers": {
-            "Content-Type": "text/plain"
-          },
-          "code": 200
-        }
-      }
+  {
+    "path": "/test",
+    "name": "Persistent HTTP Stub",
+    "method": "GET",
+    "scope": "persistent",
+    "request": {
+      "mode": "no_body",
+      "headers": {}
+    },
+    "response": {
+      "mode": "raw",
+      "body": "persistent scope",
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "code": 200
+    }
+  },
+  {
+    "path": "/jsonsubst",
+    "name": "Persistent HTTP Stub",
+    "method": "GET",
+    "scope": "persistent",
+    "request": {
+      "mode": "no_body",
+      "headers": {}
+    },
+    "response": {
+      "mode": "json",
+      "body": {"query": "${query}"},
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "code": 200
+    }
+  }
 ]

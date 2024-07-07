@@ -1,4 +1,5 @@
 use crate::api::model::RequestBody;
+use crate::misc::Substitute;
 use crate::model::*;
 use crate::predicate_dsl::json::JsonPredicate;
 use crate::predicate_dsl::keyword::Keyword;
@@ -119,7 +120,7 @@ pub enum HttpStubResponse {
         body: Value,
         #[serde(skip_serializing_if = "Option::is_none")]
         delay: Option<Duration>,
-        is_template: bool
+        //is_template: bool
     }
 }
 
@@ -129,6 +130,19 @@ impl HttpStubResponse {
             HttpStubResponse::RawResponse { delay, .. } => delay,
             HttpStubResponse::JsonResponse { delay, .. } => delay
         }
+    }
+}
+
+impl Substitute<Value> for HttpStubResponse {
+    fn substitute(&mut self, b: Value) -> &Self {
+        
+        match self {
+            HttpStubResponse::JsonResponse { body, .. } =>
+                drop(body.substitute(b)),
+            _ => ()
+        }
+
+        self
     }
 }
 

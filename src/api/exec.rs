@@ -1,10 +1,10 @@
-use crate::api::model::RequestBody;
+use crate::{api::model::RequestBody, misc::Substitute};
 use crate::api::resolver::StubResolver;
 use crate::error::Error;
 use crate::model::*;
 use crate::model::persistent::HttpStubResponse;
 use std::collections::HashMap;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 pub struct ExecHandler {
     stub_res: StubResolver
@@ -16,7 +16,7 @@ impl ExecHandler {
     }
 
     pub fn exec(&self, with_method: HttpMethod, with_path: String, with_headers: HashMap<String, String>, query_object: Value, body: RequestBody) -> Result<HttpStubResponse, Error> {
-        let (stub, stateOp) = 
+        let (mut stub, stateOp) = 
             match self.stub_res.find_stub_and_state(Scope::Countdown, &with_method, &with_path, &with_headers, &query_object, &body)?
                 .or(self.stub_res.find_stub_and_state(Scope::Ephemeral, &with_method, &with_path, &with_headers, &query_object, &body)?)
                 .or(self.stub_res.find_stub_and_state(Scope::Persistent, &with_method, &with_path, &with_headers, &query_object, &body)?) {
@@ -26,7 +26,6 @@ impl ExecHandler {
                     }
                 };
 
-        let body_string = body.extract_string();
         let body_json = stub.request.extract_json(&body);
         let groups: Option<HashMap<String, String>> = stub.path_pattern.and_then(|pattern| {
             let names = pattern.capture_names().filter_map(|n| n); 
@@ -35,6 +34,15 @@ impl ExecHandler {
                 names.filter_map(|n| c.name(n).map(|m| (n.to_string(), m.as_str().to_string()))).collect::<Vec<_>>()
             })
         }).map(|v| HashMap::from_iter(v));
+
+        let data = json!({
+            "req": body_json,
+            "query": query_object,
+            "pathParts": groups,
+            "headers": with_headers
+        });
+
+        stub.response.substitute(data);
 
         Ok(stub.response)
     }
