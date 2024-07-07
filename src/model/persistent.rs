@@ -123,6 +123,15 @@ pub enum HttpStubResponse {
     }
 }
 
+impl HttpStubResponse {
+    pub fn get_delay(&self) -> &Option<Duration> {
+        match self {
+            HttpStubResponse::RawResponse { delay, .. } => delay,
+            HttpStubResponse::JsonResponse { delay, .. } => delay
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HttpStub {
     #[serde(default)]

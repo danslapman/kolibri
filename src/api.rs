@@ -9,6 +9,7 @@ use http::StatusCode;
 use model::RequestBody;
 use serde_json::Value;
 use std::collections::HashMap;
+use tokio::time::sleep;
 
 pub mod exec;
 pub mod model;
@@ -24,6 +25,10 @@ pub async fn exec_get(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Resu
         RequestBody::AbsentRequestBody
     )?;
 
+    if let Some(delay) = resp.get_delay() {
+        sleep(delay.clone()).await;
+    }
+
     Ok(response_to_responder(resp))
 }
 
@@ -37,15 +42,19 @@ pub async fn exec_post(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Res
         RequestBody::AbsentRequestBody
     )?;
 
+    if let Some(delay) = resp.get_delay() {
+        sleep(delay.clone()).await;
+    }
+
     Ok(response_to_responder(resp))
 }
 
 fn response_to_responder(stub_response: HttpStubResponse) -> impl Responder {
     match stub_response {
-        HttpStubResponse::RawResponse { code, headers, body, delay } =>
+        HttpStubResponse::RawResponse { code, headers, body, .. } =>
             HttpResponse::new(StatusCode::from_u16(code).unwrap())
                 .set_body(body),
-        HttpStubResponse::JsonResponse { code, headers, body, delay, is_template } =>
+        HttpStubResponse::JsonResponse { code, headers, body, .. } =>
             HttpResponse::new(StatusCode::from_u16(code).unwrap())
                 .set_body(body.to_string()),
     }
