@@ -55,7 +55,7 @@ impl HttpStubRequest {
         }
     }
 
-    pub fn check_body(&self, r_body: RequestBody) -> bool {
+    pub fn check_body(&self, r_body: &RequestBody) -> bool {
         match self {
             HttpStubRequest::RequestWithoutBody { .. } =>
                 match r_body {
@@ -66,7 +66,7 @@ impl HttpStubRequest {
                 self.extract_json(r_body).map_or(false, |jx| &jx == body),
             HttpStubRequest::RawRequest { body, .. } =>
                 match r_body {
-                    RequestBody::SimpleRequestBody { value } => &value == body,
+                    RequestBody::SimpleRequestBody { value } => value == body,
                     _ => false
                 },
             HttpStubRequest::JLensRequest { body, .. } =>
@@ -74,7 +74,7 @@ impl HttpStubRequest {
         }
     }
 
-    pub fn extract_json(&self, r_body: RequestBody) -> Option<Value> {
+    pub fn extract_json(&self, r_body: &RequestBody) -> Option<Value> {
         match (self, r_body) {
             (HttpStubRequest::JsonRequest { .. } | HttpStubRequest::JLensRequest { .. }, RequestBody::SimpleRequestBody { value }) =>
                 serde_json::from_str(&value).ok(),
@@ -125,11 +125,11 @@ pub enum HttpStubResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HttpStub {
+    #[serde(default)]
     pub created: DateTime<Utc>,
     pub scope: Scope,
     #[serde(default)]
     pub times: Option<i64>,
-    pub service_suffix: String,
     pub name: String,
     pub method: HttpMethod,
     #[serde(default)]

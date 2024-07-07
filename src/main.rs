@@ -48,7 +48,7 @@ async fn main() -> std::io::Result<()> {
     SimpleLogger::new()
         .env()
         .with_level(log::LevelFilter::Debug)
-        .with_local_timestamps()
+        .with_utc_timestamps()
         .init()
         .unwrap();
 
