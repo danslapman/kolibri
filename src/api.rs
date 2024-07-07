@@ -2,7 +2,7 @@ use crate::error::Error;
 use crate::model::HttpMethod;
 use crate::model::persistent::HttpStubResponse;
 use actix_http::header::HeaderMap;
-use actix_web::{get, post, HttpResponse, HttpRequest, Responder, ResponseError, Result};
+use actix_web::{get, head, post, put, delete, options, patch, HttpResponse, HttpRequest, Responder, ResponseError, Result};
 use actix_web::web::{Data, Query};
 use exec::ExecHandler;
 use http::StatusCode;
@@ -32,10 +32,95 @@ pub async fn exec_get(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Resu
     Ok(response_to_responder(resp))
 }
 
+#[head("/api/kolibri/exec/{path:.*}")]
+pub async fn exec_head(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+    let resp = exec_handler.get_ref().exec(
+        HttpMethod::Head, 
+        req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
+        headermap_to_hashmap(req.headers()), 
+        query_string_to_json_value(req.query_string())?, 
+        RequestBody::AbsentRequestBody
+    )?;
+
+    if let Some(delay) = resp.get_delay() {
+        sleep(delay.clone()).await;
+    }
+
+    Ok(response_to_responder(resp))
+}
+
 #[post("/api/kolibri/exec/{path:.*}")]
 pub async fn exec_post(req: HttpRequest, body: String, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Get, 
+        req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
+        headermap_to_hashmap(req.headers()), 
+        query_string_to_json_value(req.query_string())?,
+        RequestBody::SimpleRequestBody { value: body }
+    )?;
+
+    if let Some(delay) = resp.get_delay() {
+        sleep(delay.clone()).await;
+    }
+
+    Ok(response_to_responder(resp))
+}
+
+#[put("/api/kolibri/exec/{path:.*}")]
+pub async fn exec_put(req: HttpRequest, body: String, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+    let resp = exec_handler.get_ref().exec(
+        HttpMethod::Put, 
+        req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
+        headermap_to_hashmap(req.headers()), 
+        query_string_to_json_value(req.query_string())?,
+        RequestBody::SimpleRequestBody { value: body }
+    )?;
+
+    if let Some(delay) = resp.get_delay() {
+        sleep(delay.clone()).await;
+    }
+
+    Ok(response_to_responder(resp))
+}
+
+#[delete("/api/kolibri/exec/{path:.*}")]
+pub async fn exec_delete(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+    let resp = exec_handler.get_ref().exec(
+        HttpMethod::Delete, 
+        req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
+        headermap_to_hashmap(req.headers()), 
+        query_string_to_json_value(req.query_string())?, 
+        RequestBody::AbsentRequestBody
+    )?;
+
+    if let Some(delay) = resp.get_delay() {
+        sleep(delay.clone()).await;
+    }
+
+    Ok(response_to_responder(resp))
+}
+
+#[options("/api/kolibri/exec/{path:.*}")]
+pub async fn exec_options(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+    let resp = exec_handler.get_ref().exec(
+        HttpMethod::Options, 
+        req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
+        headermap_to_hashmap(req.headers()), 
+        query_string_to_json_value(req.query_string())?, 
+        RequestBody::AbsentRequestBody
+    )?;
+
+    if let Some(delay) = resp.get_delay() {
+        sleep(delay.clone()).await;
+    }
+
+    Ok(response_to_responder(resp))
+}
+
+#[patch("/api/kolibri/exec/{path:.*}")]
+pub async fn exec_patch(req: HttpRequest, body: String, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+    let resp = exec_handler.get_ref().exec(
+        HttpMethod::Patch, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,
