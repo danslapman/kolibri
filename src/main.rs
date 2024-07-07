@@ -9,7 +9,7 @@ use clap::Parser;
 use simple_logger::SimpleLogger;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use std::sync::Mutex;
+use tokio::sync::RwLock;
 
 pub mod api;
 pub mod error;
@@ -41,7 +41,7 @@ async fn main() -> std::io::Result<()> {
 
     let states: Vec<State> = Vec::new();
 
-    let stub_resolver = StubResolver::new(mocks, Mutex::new(states));
+    let stub_resolver = StubResolver::new(mocks, RwLock::new(states));
 
     let exec_handler = Data::new(ExecHandler::new(stub_resolver));
 

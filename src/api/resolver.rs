@@ -1,28 +1,26 @@
 use crate::api::model::RequestBody;
 use crate::error::Error;
-use crate::misc::{Renderable, Substitute};
+use crate::misc::Renderable;
 use crate::model::*;
-use crate::predicate_dsl::keyword::Keyword;
-use crate::utils::js::optic::JsonOptic;
+use crate::predicate_dsl::json::JsonPredicate;
+use futures::future::join_all;
 use log::{error, info};
 use persistent::{HttpStub, State};
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::sync::Mutex;
+use tokio::sync::RwLock;
 
 pub struct StubResolver {
     mocks: Vec<HttpStub>,
-    states: Mutex<Vec<State>>
+    states: RwLock<Vec<State>>
 }
 
-type StateSpec = HashMap<JsonOptic, HashMap<Keyword, Value>>;
-
 impl StubResolver {
-    pub fn new(mocks: Vec<HttpStub>, states: Mutex<Vec<State>>) -> StubResolver {
+    pub fn new(mocks: Vec<HttpStub>, states: RwLock<Vec<State>>) -> StubResolver {
         StubResolver { mocks, states }
     }
 
-    pub fn find_stub_and_state(&self, in_scope: Scope, with_method: &HttpMethod, with_path: &str, with_headers: &HashMap<String, String>, query_object: &Value, body: &RequestBody) -> Result<Option<(HttpStub, Option<State>)>, Error> {
+    pub async fn find_stub_and_state(&self, in_scope: Scope, with_method: &HttpMethod, with_path: &str, with_headers: &HashMap<String, String>, query_object: &Value, body: &RequestBody) -> Result<Option<(HttpStub, Option<State>)>, Error> {
         info!("Searching searching stubs for {:?} of scope {:?}", with_path, in_scope);
 
         let candidates0: Vec<HttpStub> = self.mocks.clone().into_iter()
@@ -58,10 +56,40 @@ impl StubResolver {
             return Ok(None);
         }
 
-        let candidates4: Vec<(HttpStub, Vec<State>)> = candidates3.into_iter().map(|s| {
-            //TODO: state search
-            (s, vec![])
-        }).collect();
+        let candidates4: Vec<(HttpStub, Vec<State>)> = join_all(candidates3.into_iter().map(|s| async {
+            let body_json = s.request.extract_json(body);
+            let groups = s.extract_groups(with_path);
+            let segments = groups.map(|gs| 
+                gs.into_iter().map(|(name, value)| 
+                    (name, serde_json::from_str(&value).unwrap_or(Value::String(value))))
+                ).map(Value::from_iter);
+
+            let additional_fields = json!({
+                "__query": query_object,
+                "__segments": segments,
+                "__headers": with_headers
+            });
+
+            let mut matching_states = Vec::new();
+
+            if let Some(mut state_spec) = s.state.clone() {
+                state_spec.fill(additional_fields);
+                if let Some(bd) = body_json {
+                    state_spec.fill(bd);
+                }
+                let predicate = JsonPredicate::from_spec(state_spec);
+
+                for state in self.states.read().await.iter() {
+                    match predicate.validate(state.data.clone()) {
+                        Ok(true) => matching_states.push(state.clone()),
+                        Ok(false) => (),
+                        Err(err) => error!("{err}"),
+                    }
+                }
+            }
+
+            (s, matching_states)
+        })).await;
 
         if candidates4.iter().any(|(_, states)| states.len() > 1) {
             error!("For one or more stubs, multiple suitable states were found");

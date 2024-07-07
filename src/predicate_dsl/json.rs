@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize, Serializer, Deserializer};
 use serde::de::Error;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 type Spec = HashMap<JsonOptic, HashMap<Keyword, Value>>;
 type Condition<'r> = (&'r Keyword, &'r Value);
@@ -134,6 +134,16 @@ fn validate_condition<'r>(kwd: &'r Keyword, etalon: &'r Value) -> bool {
 
 pub struct PredicateConstructionError<'r> {
     pub problems: Vec<Condition<'r>>
+}
+
+impl <'r> Display for PredicateConstructionError<'r> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Problem(s) with the following conditions(s) occured: {:?}",
+            &self.problems
+        )
+    }
 }
 
 enum ValidationError<'r> {

@@ -23,7 +23,7 @@ pub async fn exec_get(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<Ex
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
         bytes_to_request_body(body_bytes)?
-    )?;
+    ).await?;
 
     if let Some(delay) = resp.get_delay() {
         sleep(delay.clone()).await;
@@ -40,7 +40,7 @@ pub async fn exec_head(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<E
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
         bytes_to_request_body(body_bytes)?
-    )?;
+    ).await?;
 
     if let Some(delay) = resp.get_delay() {
         sleep(delay.clone()).await;
@@ -57,7 +57,7 @@ pub async fn exec_post(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<E
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,
         bytes_to_request_body(body_bytes)?
-    )?;
+    ).await?;
 
     if let Some(delay) = resp.get_delay() {
         sleep(delay.clone()).await;
@@ -74,7 +74,7 @@ pub async fn exec_put(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<Ex
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,
         bytes_to_request_body(body_bytes)?
-    )?;
+    ).await?;
 
     if let Some(delay) = resp.get_delay() {
         sleep(delay.clone()).await;
@@ -91,7 +91,7 @@ pub async fn exec_delete(req: HttpRequest, body_bytes: Bytes, exec_handler: Data
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
         bytes_to_request_body(body_bytes)?
-    )?;
+    ).await?;
 
     if let Some(delay) = resp.get_delay() {
         sleep(delay.clone()).await;
@@ -108,7 +108,7 @@ pub async fn exec_options(req: HttpRequest, body_bytes: Bytes, exec_handler: Dat
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
         bytes_to_request_body(body_bytes)?
-    )?;
+    ).await?;
 
     if let Some(delay) = resp.get_delay() {
         sleep(delay.clone()).await;
@@ -125,7 +125,7 @@ pub async fn exec_patch(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,
         bytes_to_request_body(body_bytes)?
-    )?;
+    ).await?;
 
     if let Some(delay) = resp.get_delay() {
         sleep(delay.clone()).await;
@@ -170,7 +170,7 @@ fn headermap_to_hashmap(headermap: &HeaderMap) -> HashMap<String, String> {
 
 fn query_string_to_json_value(query_string: &str) -> Result<Value, Error> {
     let params = Query::<Vec<(String, String)>>::from_query(query_string)
-        .map_err(|e| Error::from(format!("{}", e)))?.0;
+        .map_err(|e| Error::from(e))?.0;
 
     Ok(Value::from_iter(params.into_iter().map(|(key, value)| (key, serde_json::from_str(value.as_str()).unwrap_or(Value::String(value)) ))))
 }
@@ -181,7 +181,7 @@ fn bytes_to_request_body(body_bytes: Bytes) -> Result<RequestBody, Error> {
     } else {
         let bytes_vec = body_bytes.to_vec();
         String::from_utf8(bytes_vec.clone())
-            .map_err(|e| Error::from(format!("{}", e)))
+            .map_err(|e| Error::from(e))
             .map(|body_str| RequestBody::SimpleRequestBody { raw_value: bytes_vec, value: body_str })
     }
 }

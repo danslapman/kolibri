@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+futures = "0.3"
 actix-web = "4"
 actix-http = "3.8"
 http = "0.2"
