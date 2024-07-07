@@ -51,12 +51,24 @@ pub async fn exec_post(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Res
 
 fn response_to_responder(stub_response: HttpStubResponse) -> impl Responder {
     match stub_response {
-        HttpStubResponse::RawResponse { code, headers, body, .. } =>
-            HttpResponse::new(StatusCode::from_u16(code).unwrap())
-                .set_body(body),
-        HttpStubResponse::JsonResponse { code, headers, body, .. } =>
-            HttpResponse::new(StatusCode::from_u16(code).unwrap())
-                .set_body(body.to_string()),
+        HttpStubResponse::RawResponse { code, headers, body, .. } => {
+            let mut builder = HttpResponse::build(StatusCode::from_u16(code).unwrap());
+
+            for (key, value) in headers.into_iter() {
+                builder.append_header((key, value));
+            }
+
+            builder.body(body)
+        },
+        HttpStubResponse::JsonResponse { code, headers, body, .. } => {
+            let mut builder = HttpResponse::build(StatusCode::from_u16(code).unwrap());
+
+            for (key, value) in headers.into_iter() {
+                builder.append_header((key, value));
+            }
+
+            builder.body(body.to_string())
+        }
     }
 }
 
