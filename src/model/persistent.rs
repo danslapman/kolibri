@@ -66,7 +66,7 @@ impl HttpStubRequest {
                 self.extract_json(r_body).map_or(false, |jx| &jx == body),
             HttpStubRequest::RawRequest { body, .. } =>
                 match r_body {
-                    RequestBody::SimpleRequestBody { value } => value == body,
+                    RequestBody::SimpleRequestBody { value, .. } => value == body,
                     _ => false
                 },
             HttpStubRequest::JLensRequest { body, .. } =>
@@ -76,7 +76,7 @@ impl HttpStubRequest {
 
     pub fn extract_json(&self, r_body: &RequestBody) -> Option<Value> {
         match (self, r_body) {
-            (HttpStubRequest::JsonRequest { .. } | HttpStubRequest::JLensRequest { .. }, RequestBody::SimpleRequestBody { value }) =>
+            (HttpStubRequest::JsonRequest { .. } | HttpStubRequest::JLensRequest { .. }, RequestBody::SimpleRequestBody { value, .. }) =>
                 serde_json::from_str(&value).ok(),
             _ => None
         }

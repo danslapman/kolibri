@@ -3,7 +3,7 @@ use crate::model::HttpMethod;
 use crate::model::persistent::HttpStubResponse;
 use actix_http::header::HeaderMap;
 use actix_web::{get, head, post, put, delete, options, patch, HttpResponse, HttpRequest, Responder, ResponseError, Result};
-use actix_web::web::{Data, Query};
+use actix_web::web::{Bytes, Data, Query};
 use exec::ExecHandler;
 use http::StatusCode;
 use model::RequestBody;
@@ -16,13 +16,13 @@ pub mod model;
 pub mod resolver;
 
 #[get("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_get(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_get(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Get, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
-        RequestBody::AbsentRequestBody
+        bytes_to_request_body(body_bytes)?
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -33,13 +33,13 @@ pub async fn exec_get(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Resu
 }
 
 #[head("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_head(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_head(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Head, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
-        RequestBody::AbsentRequestBody
+        bytes_to_request_body(body_bytes)?
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -50,13 +50,13 @@ pub async fn exec_head(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Res
 }
 
 #[post("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_post(req: HttpRequest, body: String, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_post(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Get, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,
-        RequestBody::SimpleRequestBody { value: body }
+        bytes_to_request_body(body_bytes)?
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -67,13 +67,13 @@ pub async fn exec_post(req: HttpRequest, body: String, exec_handler: Data<ExecHa
 }
 
 #[put("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_put(req: HttpRequest, body: String, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_put(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Put, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,
-        RequestBody::SimpleRequestBody { value: body }
+        bytes_to_request_body(body_bytes)?
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -84,13 +84,13 @@ pub async fn exec_put(req: HttpRequest, body: String, exec_handler: Data<ExecHan
 }
 
 #[delete("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_delete(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_delete(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Delete, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
-        RequestBody::AbsentRequestBody
+        bytes_to_request_body(body_bytes)?
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -101,13 +101,13 @@ pub async fn exec_delete(req: HttpRequest, exec_handler: Data<ExecHandler>) -> R
 }
 
 #[options("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_options(req: HttpRequest, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_options(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Options, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?, 
-        RequestBody::AbsentRequestBody
+        bytes_to_request_body(body_bytes)?
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -118,13 +118,13 @@ pub async fn exec_options(req: HttpRequest, exec_handler: Data<ExecHandler>) -> 
 }
 
 #[patch("/api/kolibri/exec/{path:.*}")]
-pub async fn exec_patch(req: HttpRequest, body: String, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
+pub async fn exec_patch(req: HttpRequest, body_bytes: Bytes, exec_handler: Data<ExecHandler>) -> Result<impl Responder> {
     let resp = exec_handler.get_ref().exec(
         HttpMethod::Patch, 
         req.path().strip_prefix("/api/kolibri/exec").unwrap_or("").to_string(), 
         headermap_to_hashmap(req.headers()), 
         query_string_to_json_value(req.query_string())?,
-        RequestBody::SimpleRequestBody { value: body }
+        bytes_to_request_body(body_bytes)?
     )?;
 
     if let Some(delay) = resp.get_delay() {
@@ -173,4 +173,15 @@ fn query_string_to_json_value(query_string: &str) -> Result<Value, Error> {
         .map_err(|e| Error::from(format!("{}", e)))?.0;
 
     Ok(Value::from_iter(params.into_iter().map(|(key, value)| (key, serde_json::from_str(value.as_str()).unwrap_or(Value::String(value)) ))))
-} 
+}
+
+fn bytes_to_request_body(body_bytes: Bytes) -> Result<RequestBody, Error> {
+    if body_bytes.is_empty() {
+        Ok(RequestBody::AbsentRequestBody)
+    } else {
+        let bytes_vec = body_bytes.to_vec();
+        String::from_utf8(bytes_vec.clone())
+            .map_err(|e| Error::from(format!("{}", e)))
+            .map(|body_str| RequestBody::SimpleRequestBody { raw_value: bytes_vec, value: body_str })
+    }
+}
