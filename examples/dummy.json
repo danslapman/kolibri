@@ -34,5 +34,23 @@
       },
       "code": 200
     }
+  },
+  {
+    "pathPattern": "/grouped/(?P<id>\\d+)",
+    "name": "Persistent HTTP Stub",
+    "method": "GET",
+    "scope": "persistent",
+    "request": {
+      "mode": "no_body",
+      "headers": {}
+    },
+    "response": {
+      "mode": "json",
+      "body": {"groups": "${pathParts}"},
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "code": 200
+    }
   }
 ]

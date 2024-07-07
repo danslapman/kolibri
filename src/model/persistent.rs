@@ -147,6 +147,7 @@ impl Substitute<Value> for HttpStubResponse {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HttpStub {
     #[serde(default)]
     pub created: DateTime<Utc>,
@@ -170,6 +171,18 @@ pub struct HttpStub {
     pub response: HttpStubResponse,
     #[serde(default)]
     pub callback: Option<Callback>
+}
+
+impl HttpStub {
+    pub fn extract_groups(&self, path: &str) -> Option<HashMap<String, String>> {
+        self.path_pattern.clone().and_then(|pattern| {
+            let names = pattern.capture_names().filter_map(|n| n); 
+
+            pattern.captures(path).map(|c| {
+                names.filter_map(|n| c.name(n).map(|m| (n.to_string(), m.as_str().to_string()))).collect::<Vec<_>>()
+            })
+        }).map(|v| HashMap::from_iter(v))
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

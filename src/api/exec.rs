@@ -27,13 +27,7 @@ impl ExecHandler {
                 };
 
         let body_json = stub.request.extract_json(&body);
-        let groups: Option<HashMap<String, String>> = stub.path_pattern.and_then(|pattern| {
-            let names = pattern.capture_names().filter_map(|n| n); 
-
-            pattern.captures(&with_path).map(|c| {
-                names.filter_map(|n| c.name(n).map(|m| (n.to_string(), m.as_str().to_string()))).collect::<Vec<_>>()
-            })
-        }).map(|v| HashMap::from_iter(v));
+        let groups = stub.extract_groups(&with_path);
 
         let data = json!({
             "req": body_json,
