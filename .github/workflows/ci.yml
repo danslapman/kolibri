@@ -10,11 +10,28 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            artifact_name: kolibri
+            asset_name: kolibri-linux
           - os: windows-latest
+            artifact_name: kolibri.exe
+            asset_name: kolibri.exe
           - os: macos-latest
+            artifact_name: kolibri
+            asset_name: kolibri-mac
 
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Run cargo test
         run: cargo test
+      - name: Build release executable
+        run: cargo build --release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      - name: Publish binaries
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
