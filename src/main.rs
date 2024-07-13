@@ -23,7 +23,6 @@ pub mod utils;
 #[derive(Parser, Debug)]
 #[clap(
     author = "Daniel Slapman <danslapman@gmail.com>",
-    version = "0.1",
     about = "Standalone mocking server"
 )]
 struct Args {
