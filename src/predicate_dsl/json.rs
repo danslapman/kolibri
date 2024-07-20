@@ -61,7 +61,7 @@ impl JsonPredicate {
             (Keyword::Less, Value::Number(_), _) => Err(ValidationError::DataError),
             (Keyword::Lte, Value::Number(u_b), Value::Number(nv)) => Ok(nv.to_big_decimal() <= u_b.to_big_decimal()),
             (Keyword::Lte, Value::Number(_), _) => Err(ValidationError::DataError),
-            (Keyword::Rx, Value::String(rx), Value::String(s)) => match Regex::new(rx) {
+            (Keyword::Rx, Value::String(rx), Value::String(s)) => match Regex::new(format!("^(?:{})$", rx).as_str()) {
                 Ok(regex) => Ok(regex.is_match(s)),
                 _ => Err(ValidationError::ConditionError {keyword: kwd, argument: etalon } )
             },
@@ -303,7 +303,7 @@ mod json_tests {
         assert!(!predicate.validate(json!({"f": "123"})).ok().unwrap());
         assert!(predicate.validate(json!({"f": "1234"})).ok().unwrap());
         assert!(!predicate.validate(json!({"f": 1234})).ok().unwrap());
-        assert!(predicate.validate(json!({"f": "1234a"})).ok().unwrap()); //TODO: fix incomplete match
+        assert!(!predicate.validate(json!({"f": "1234a"})).ok().unwrap());
         assert!(predicate.validate(json!({"f": "12345"})).ok().unwrap());
     }
 
