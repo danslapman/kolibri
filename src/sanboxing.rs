@@ -62,4 +62,11 @@ mod sandboxing_tests {
         JsSandbox::make_runner(HashMap::new()).unwrap().eval("var a = 42;").unwrap();
         JsSandbox::make_runner(HashMap::new()).unwrap().eval("a").expect_err("a is not defined");
     }
+
+    #[test]
+    fn get_value_from_provided_map() {
+        let env = HashMap::from([("m", json!({"f1": "hello"}))]);
+        let res: Value = JsSandbox::make_runner(env).unwrap().eval("m.f1").unwrap();
+        assert_eq!(res, json!("hello"));
+    }
 }
