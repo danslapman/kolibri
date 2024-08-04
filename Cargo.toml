@@ -22,3 +22,4 @@ clap = { version = "4.*", features = ["derive"]}
 uuid = { version = "1", features = ["v4"]}
 json_value_merge = "2"
 rustyscript = "0.8"
+fluent-assertions = "0.3"

@@ -1,7 +1,11 @@
 use crate::error::Error;
 use rustyscript::{Runtime, RuntimeOptions};
 use serde_json::Value;
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::sync::LazyLock;
+
+static PRELUDE: LazyLock<Cow<'_, str>> = LazyLock::new(|| String::from_utf8_lossy(include_bytes!("prelude.js")));
 
 pub struct CodeRunner {
     runtime: Runtime
@@ -18,6 +22,8 @@ pub struct JsSandbox {}
 impl JsSandbox {
     pub fn make_runner(environment: HashMap<String, Value>) -> Result<CodeRunner, Error> {
         let mut runtime = Runtime::new(RuntimeOptions::default()).map_err(Error::from)?;
+
+        runtime.eval::<()>(&PRELUDE).map_err(Error::from)?;
 
         for (key, value) in environment.into_iter() {
             let serialized_value = serde_json::to_string(&value).map_err(Error::from)?;

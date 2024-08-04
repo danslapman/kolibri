@@ -177,7 +177,10 @@ fn render_subst(value: &Value) -> String {
 
 #[cfg(test)]
 mod json_templater_tests {
+    use fluent_assertions::*;
     use serde_json::{json, Value};
+    use std::collections::HashSet;
+    use uuid::Uuid;
     use crate::utils::transformations::js::*;
 
     #[test]
@@ -306,6 +309,47 @@ mod json_templater_tests {
                 "c" : 45.99
             }
         ))
+    }
+
+    #[test]
+    fn javascript_eval() {
+        let mut target: Value = json!(
+            {
+                "a" : "%{randomString(10)}",
+                "ai" : "%{randomString(\"ABCDEF1234567890\", 4, 6)}",
+                "b" : "%{randomInt(5)}",
+                "bi" : "%{randomInt(3, 8)}",
+                "c" : "%{randomLong(5)}",
+                "ci" : "%{randomLong(3, 8)}",
+                "d" : "%{UUID()}"
+            }
+        );
+
+        target.substitute_in_place(Value::Null);
+
+        let allowed_chars = HashSet::from(['A', 'B', 'C', 'D', 'D', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']);
+
+        target.get_all(&JsonOptic::from_path("a")).first().and_then(|v| v.as_str()).filter(|s| s.len() == 10).should().be_some();
+        target.get_all(&JsonOptic::from_path("ai")).first().and_then(|v| v.as_str())
+            .filter(|&s| s.chars().all(|c| allowed_chars.contains(&c))).should().be_some();
+        target.get_all(&JsonOptic::from_path("b")).first().and_then(|v| v.as_i64()).filter(|&i| i < 5).should().be_some();
+        target.get_all(&JsonOptic::from_path("bi")).first().and_then(|v| v.as_i64()).filter(|&i| i >= 3 && i < 8).should().be_some();
+        target.get_all(&JsonOptic::from_path("c")).first().and_then(|v| v.as_i64()).filter(|&i| i < 5).should().be_some();
+        target.get_all(&JsonOptic::from_path("ci")).first().and_then(|v| v.as_i64()).filter(|&i| i >= 3 && i < 8).should().be_some();
+        target.get_all(&JsonOptic::from_path("d")).first().and_then(|v| v.as_str()).and_then(|s| Uuid::try_parse(s).ok()).should().be_some();
+    }
+
+    #[test]
+    fn formatted_eval() {
+        let mut target: Value = json!(
+            {
+                "fmt" : "%{randomInt(10) + ': ' + randomLong(10) + ' | ' + randomString(12)}"
+            }
+        );
+
+        target.substitute_in_place(Value::Null);
+
+        target.get_all(&JsonOptic::from_path("fmt")).first().and_then(|v| v.as_str()).filter(|s| s.len() == 19).should().be_some();
     }
 
     #[test]
