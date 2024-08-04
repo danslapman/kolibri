@@ -327,7 +327,7 @@ mod json_templater_tests {
 
         target.substitute_in_place(Value::Null);
 
-        let allowed_chars = HashSet::from(['A', 'B', 'C', 'D', 'D', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']);
+        let allowed_chars = HashSet::from(['A', 'B', 'C', 'D', 'E', 'F', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']);
 
         target.get_all(&JsonOptic::from_path("a")).first().and_then(|v| v.as_str()).filter(|s| s.len() == 10).should().be_some();
         target.get_all(&JsonOptic::from_path("ai")).first().and_then(|v| v.as_str())
