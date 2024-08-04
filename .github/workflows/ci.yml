@@ -18,7 +18,8 @@ jobs:
           - os: macos-latest
             artifact_name: kolibri
             asset_name: kolibri-mac
-
+    env:
+      RUST_BACKTRACE: 1
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
