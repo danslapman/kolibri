@@ -17,19 +17,14 @@ pub struct JsSandbox {}
 
 impl JsSandbox {
     pub fn make_runner(environment: HashMap<&str, Value>) -> Result<CodeRunner, Error> {
-        let mut runtime = Runtime::new(RuntimeOptions::default())?;
+        let mut runtime = Runtime::new(RuntimeOptions::default()).map_err(Error::from)?;
 
         for (key, value) in environment.into_iter() {
-            runtime.eval::<()>(format!("var {} = {};", key, value).as_str())?;
+            let serialized_value = serde_json::to_string(&value).map_err(Error::from)?;
+            runtime.eval::<()>(format!("var {} = {};", key, serialized_value).as_str()).map_err(Error::from)?;
         }
         
         Ok(CodeRunner { runtime })
-    }
-}
-
-impl From<rustyscript::Error> for Error {
-    fn from(value: rustyscript::Error) -> Self {
-        Error::from(value)
     }
 }
 
