@@ -8,7 +8,7 @@ pub struct CodeRunner {
 }
 
 impl CodeRunner {
-    fn eval(&mut self, code: &str) -> Result<Value, Error> {
+    pub fn eval(&mut self, code: &str) -> Result<Value, Error> {
         self.runtime.eval(code).map_err(Error::from)
     }
 }
@@ -16,7 +16,7 @@ impl CodeRunner {
 pub struct JsSandbox {}
 
 impl JsSandbox {
-    pub fn make_runner(environment: HashMap<&str, Value>) -> Result<CodeRunner, Error> {
+    pub fn make_runner(environment: HashMap<String, Value>) -> Result<CodeRunner, Error> {
         let mut runtime = Runtime::new(RuntimeOptions::default()).map_err(Error::from)?;
 
         for (key, value) in environment.into_iter() {
@@ -52,7 +52,7 @@ mod sandboxing_tests {
 
     #[test]
     fn eval_with_context() {
-        let env = HashMap::from([("a", json!(1)), ("b", json!(2))]);
+        let env = HashMap::from([("a".to_string(), json!(1)), ("b".to_string(), json!(2))]);
         let res: Value = JsSandbox::make_runner(env).unwrap().eval("a + b").unwrap();
         assert_eq!(res, json!(3));
     }
@@ -65,7 +65,7 @@ mod sandboxing_tests {
 
     #[test]
     fn get_value_from_provided_map() {
-        let env = HashMap::from([("m", json!({"f1": "hello"}))]);
+        let env = HashMap::from([("m".to_string(), json!({"f1": "hello"}))]);
         let res: Value = JsSandbox::make_runner(env).unwrap().eval("m.f1").unwrap();
         assert_eq!(res, json!("hello"));
     }
