@@ -1,8 +1,8 @@
-use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 use serde_json::Value;
 use std::fmt::{Debug, Display, Formatter};
+use std::sync::LazyLock;
 use crate::utils::js::ValueExtInternal;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -27,7 +27,7 @@ pub struct JsonOptic {
     json_path: Vec<PathPart>,
 }
 
-static INDEX_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[(\d+)\]").unwrap());
+static INDEX_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[(\d+)\]").unwrap());
 
 impl JsonOptic {
     pub fn empty() -> JsonOptic {

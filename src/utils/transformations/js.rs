@@ -1,13 +1,13 @@
-use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use serde_json::de;
 use serde_json::{Number, Value};
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use crate::sanboxing::{CodeRunner, JsSandbox};
 use crate::utils::js::optic::{JsonOptic, ValueExt};
 use crate::utils::transformations::CODE_PATTERN;
 
-static JSON_OPTIC_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\$([:~])?\{([\p{L}\d\.\[\]\-_]+)\}").unwrap());
+static JSON_OPTIC_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$([:~])?\{([\p{L}\d\.\[\]\-_]+)\}").unwrap());
 
 pub struct JsonPatcher {
     new_value: Value

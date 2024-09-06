@@ -1,6 +1,6 @@
-use once_cell::sync::Lazy;
 use regex::Regex;
+use std::sync::LazyLock;
 
 pub mod js;
 
-static CODE_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"%\{(.+?)\}").unwrap());
+static CODE_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"%\{(.+?)\}").unwrap());
