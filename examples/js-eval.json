@@ -1,0 +1,29 @@
+[
+    {
+        "path": "/evaluated",
+        "name": "Persistent HTTP Stub",
+        "method": "GET",
+        "scope": "persistent",
+        "request": {
+          "mode": "no_body",
+          "headers": {}
+        },
+        "response": {
+          "mode": "json",
+          "body": {
+            "a" : "%{randomString(10)}",
+            "ai" : "%{randomString(\"ABCDEF1234567890\", 4, 6)}",
+            "an": "%{randomNumericString(5)}",
+            "b" : "%{randomInt(5)}",
+            "bi" : "%{randomInt(3, 8)}",
+            "c" : "%{randomLong(5)}",
+            "ci" : "%{randomLong(3, 8)}",
+            "d" : "%{UUID()}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "code": 200
+        }
+      }
+]
