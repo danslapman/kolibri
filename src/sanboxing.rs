@@ -1,5 +1,8 @@
 use crate::error::Error;
-use rustyscript::{Runtime, RuntimeOptions};
+use deno_core::v8;
+use deno_core::JsRuntime;
+use deno_core::RuntimeOptions;
+use ouroboros::self_referencing;
 use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -7,13 +10,35 @@ use std::sync::LazyLock;
 
 static PRELUDE: LazyLock<Cow<'_, str>> = LazyLock::new(|| String::from_utf8_lossy(include_bytes!("prelude.js")));
 
+//Basically JsRuntime::eval, but without Error constraint
+fn deno_eval<'s, T>(scope: &mut v8::HandleScope<'s>, code: &str,) -> Option<v8::Local<'s, T>>
+    where
+        v8::Local<'s, T>: TryFrom<v8::Local<'s, v8::Value>>,
+{
+    let scope = &mut v8::EscapableHandleScope::new(scope);
+    let source = v8::String::new(scope, code).unwrap();
+    let script = v8::Script::compile(scope, source, None).unwrap();
+    let v = script.run(scope)?;
+    scope.escape(v).try_into().ok()
+}
+
+#[self_referencing]
 pub struct CodeRunner {
-    runtime: Runtime
+    runtime: JsRuntime,
+
+    #[borrows(mut runtime)]
+    #[not_covariant]
+    scope: v8::HandleScope<'this>,
 }
 
 impl CodeRunner {
     pub fn eval(&mut self, code: &str) -> Result<Value, Error> {
-        self.runtime.eval(code).map_err(Error::from)
+        self.with_scope_mut(|scope| {
+            let evaluated: Option<v8::Local<v8::Value>> = deno_eval::<v8::Value>(scope, code);
+            let local: v8::Local<v8::Value> = evaluated.ok_or(Error::new("JS evaluation failed".to_string()))?;
+
+            serde_v8::from_v8::<serde_json::Value>(scope, local).map_err(Error::from)
+        })
     }
 }
 
@@ -21,16 +46,21 @@ pub struct JsSandbox {}
 
 impl JsSandbox {
     pub fn make_runner(environment: HashMap<String, Value>) -> Result<CodeRunner, Error> {
-        let mut runtime = Runtime::new(RuntimeOptions::default()).map_err(Error::from)?;
+        let mut runner = CodeRunnerBuilder {
+            runtime: JsRuntime::new(RuntimeOptions::default()),
+            scope_builder: |rt| rt.handle_scope()
+        }.build();
 
-        runtime.eval::<()>(&PRELUDE).map_err(Error::from)?;
+        runner.with_scope_mut(|scope| {
+            deno_eval::<v8::Value>(scope, &PRELUDE);
 
-        for (key, value) in environment.into_iter() {
-            let serialized_value = serde_json::to_string(&value).map_err(Error::from)?;
-            runtime.eval::<()>(format!("var {} = {};", key, serialized_value).as_str()).map_err(Error::from)?;
-        }
-        
-        Ok(CodeRunner { runtime })
+            for (key, value) in environment.into_iter() {
+                let serialized_value = serde_json::to_string(&value).expect("It cannot happen");
+                deno_eval::<v8::Value>(scope, format!("var {} = {};", key, serialized_value).as_str());
+            }
+        });
+
+        Ok(runner)
     }
 }
 
