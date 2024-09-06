@@ -18,6 +18,7 @@ pub mod error;
 pub mod misc;
 pub mod model;
 pub mod predicate_dsl;
+pub mod sanboxing;
 pub mod utils;
 
 #[derive(Parser, Debug)]
