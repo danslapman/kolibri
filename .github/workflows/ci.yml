@@ -15,9 +15,12 @@ jobs:
           - os: windows-latest
             artifact_name: kolibri.exe
             asset_name: kolibri.exe
-          - os: macos-latest
+          - os: macos-13
             artifact_name: kolibri
             asset_name: kolibri-mac
+          - os: macos-latest
+            artifact_name: kolibri
+            asset_name: kolibri-mac-arm
     env:
       RUST_BACKTRACE: 1
     steps:
