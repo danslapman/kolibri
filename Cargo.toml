@@ -20,7 +20,7 @@ simple_logger = { version = "5", features = ["timestamps"]}
 clap = { version = "4.*", features = ["derive"]}
 uuid = { version = "1", features = ["v4"]}
 json_value_merge = "2"
-deno_core = "0.325"
-serde_v8 = "0.234"
-fluent-assertions = "0.3"
+deno_core = "0.334"
+serde_v8 = "0.243"
+fluent-assertions = "0.4"
 ouroboros = "0.18"
