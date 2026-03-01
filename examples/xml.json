@@ -1,0 +1,121 @@
+[
+  {
+    "path": "/xml/ping",
+    "name": "XML exact match",
+    "method": "POST",
+    "scope": "persistent",
+    "request": {
+      "mode": "xml",
+      "headers": {},
+      "body": "<request><action>ping</action></request>"
+    },
+    "response": {
+      "mode": "xml",
+      "code": 200,
+      "headers": {},
+      "body": "<response><status>pong</status></response>",
+      "is_template": false
+    }
+  },
+  {
+    "path": "/xml/greet",
+    "name": "XPath predicate with XPath response substitution",
+    "method": "POST",
+    "scope": "persistent",
+    "request": {
+      "mode": "xpath",
+      "headers": {},
+      "body": {
+        "/request/name": { "exists": true }
+      }
+    },
+    "response": {
+      "mode": "xml",
+      "code": 200,
+      "headers": {},
+      "body": "<response><greeting>Hello, ${{/request/name}}!</greeting></response>"
+    }
+  },
+  {
+    "path": "/xml/age-check",
+    "name": "XPath numeric predicate — adult",
+    "method": "POST",
+    "scope": "persistent",
+    "request": {
+      "mode": "xpath",
+      "headers": {},
+      "body": {
+        "/request/age": { ">": 18 }
+      }
+    },
+    "response": {
+      "mode": "xml",
+      "code": 200,
+      "headers": {},
+      "body": "<response><eligible>true</eligible><age>${{/request/age}}</age></response>"
+    }
+  },
+  {
+    "path": "/xml/age-check",
+    "name": "XPath numeric predicate — minor",
+    "method": "POST",
+    "scope": "persistent",
+    "request": {
+      "mode": "xpath",
+      "headers": {},
+      "body": {
+        "/request/age": { "<=": 18 }
+      }
+    },
+    "response": {
+      "mode": "xml",
+      "code": 200,
+      "headers": {},
+      "body": "<response><eligible>false</eligible><age>${{/request/age}}</age></response>"
+    }
+  },
+  {
+    "path": "/xml/cdata",
+    "name": "cdata keyword — exact CDATA content match",
+    "method": "POST",
+    "scope": "persistent",
+    "request": {
+      "mode": "xpath",
+      "headers": {},
+      "body": {
+        "/root/data": { "cdata": { "==": "hello world" } }
+      }
+    },
+    "response": {
+      "mode": "xml",
+      "code": 200,
+      "headers": {},
+      "body": "<response><status>cdata matched</status></response>",
+      "is_template": false
+    }
+  },
+  {
+    "path": "/xml/jcdata",
+    "name": "jcdata keyword — JSON inside CDATA",
+    "method": "POST",
+    "scope": "persistent",
+    "request": {
+      "mode": "xpath",
+      "headers": {},
+      "body": {
+        "/root/payload": {
+          "jcdata": {
+            "name": { "==": "Alice" }
+          }
+        }
+      }
+    },
+    "response": {
+      "mode": "xml",
+      "code": 200,
+      "headers": {},
+      "body": "<response><status>Alice found in CDATA JSON</status></response>",
+      "is_template": false
+    }
+  }
+]

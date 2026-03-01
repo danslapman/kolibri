@@ -3,6 +3,7 @@ use crate::misc::Substitute;
 use crate::model::*;
 use crate::predicate_dsl::json::JsonPredicate;
 use crate::predicate_dsl::keyword::Keyword;
+use crate::predicate_dsl::xml::XmlPredicate;
 use crate::utils::js::optic::JsonOptic;
 use chrono::{DateTime, Utc};
 use regex::Regex;
@@ -41,6 +42,20 @@ pub enum HttpStubRequest {
         #[serde(default = "HashMap::new")]
         query: HashMap<JsonOptic, HashMap<Keyword, Value>>,
         body: JsonPredicate
+    },
+    #[serde(rename = "xml")]
+    XmlRequest {
+        headers: HashMap<String, String>,
+        #[serde(default = "HashMap::new")]
+        query: HashMap<JsonOptic, HashMap<Keyword, Value>>,
+        body: String
+    },
+    #[serde(rename = "xpath")]
+    XPathRequest {
+        headers: HashMap<String, String>,
+        #[serde(default = "HashMap::new")]
+        query: HashMap<JsonOptic, HashMap<Keyword, Value>>,
+        body: XmlPredicate
     }
 }
 
@@ -72,7 +87,17 @@ impl HttpStubRequest {
                     _ => false
                 },
             HttpStubRequest::JLensRequest { body, .. } =>
-                self.extract_json(r_body).and_then(|jx| body.validate(jx).ok()).unwrap_or(false)
+                self.extract_json(r_body).and_then(|jx| body.validate(jx).ok()).unwrap_or(false),
+            HttpStubRequest::XmlRequest { body, .. } =>
+                match r_body {
+                    RequestBody::SimpleRequestBody { value, .. } => xml_canonical_equal(value, body),
+                    _ => false
+                },
+            HttpStubRequest::XPathRequest { body, .. } =>
+                match r_body {
+                    RequestBody::SimpleRequestBody { value, .. } => body.validate(value).unwrap_or(false),
+                    _ => false
+                }
         }
     }
 
@@ -90,6 +115,8 @@ impl HttpStubRequest {
             HttpStubRequest::JsonRequest { headers, .. } => headers,
             HttpStubRequest::RawRequest { headers, .. } => headers,
             HttpStubRequest::JLensRequest { headers, .. } => headers,
+            HttpStubRequest::XmlRequest { headers, .. } => headers,
+            HttpStubRequest::XPathRequest { headers, .. } => headers,
         }
     }
 
@@ -99,6 +126,8 @@ impl HttpStubRequest {
             HttpStubRequest::JsonRequest { query, .. } => query,
             HttpStubRequest::RawRequest { query, .. } => query,
             HttpStubRequest::JLensRequest { query, .. } => query,
+            HttpStubRequest::XmlRequest { query, .. } => query,
+            HttpStubRequest::XPathRequest { query, .. } => query,
         }
     }
 }
@@ -122,21 +151,41 @@ pub enum HttpStubResponse {
         #[serde(skip_serializing_if = "Option::is_none")]
         delay: Option<Duration>,
         //is_template: bool
+    },
+    #[serde(rename = "xml")]
+    XmlResponse {
+        code: u16,
+        headers: HashMap<String, String>,
+        body: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        delay: Option<Duration>,
+        #[serde(default = "default_true")]
+        is_template: bool
     }
 }
+
+fn default_true() -> bool { true }
 
 impl HttpStubResponse {
     pub fn get_delay(&self) -> &Option<Duration> {
         match self {
             HttpStubResponse::RawResponse { delay, .. } => delay,
-            HttpStubResponse::JsonResponse { delay, .. } => delay
+            HttpStubResponse::JsonResponse { delay, .. } => delay,
+            HttpStubResponse::XmlResponse { delay, .. } => delay
+        }
+    }
+
+    pub fn substitute_xml(&mut self, data: Value, request_xml: Option<&str>) {
+        use crate::utils::transformations::xml::substitute_xml_template;
+        if let HttpStubResponse::XmlResponse { body, is_template: true, .. } = self {
+            *body = substitute_xml_template(body, &data, request_xml);
         }
     }
 }
 
 impl Substitute<Value> for HttpStubResponse {
     fn substitute(&mut self, b: Value) -> &Self {
-        
+
         match self {
             HttpStubResponse::JsonResponse { body, .. } =>
                 drop(body.substitute(b)),
@@ -144,6 +193,24 @@ impl Substitute<Value> for HttpStubResponse {
         }
 
         self
+    }
+}
+
+fn xml_canonical_equal(a: &str, b: &str) -> bool {
+    use sxd_document::parser as xml_parser;
+    use sxd_document::writer;
+
+    let canonicalize = |text: &str| -> Option<String> {
+        let package = xml_parser::parse(text).ok()?;
+        let document = package.as_document();
+        let mut output = Vec::new();
+        writer::format_document(&document, &mut output).ok()?;
+        String::from_utf8(output).ok()
+    };
+
+    match (canonicalize(a), canonicalize(b)) {
+        (Some(ca), Some(cb)) => ca == cb,
+        _ => false
     }
 }
 

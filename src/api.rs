@@ -157,6 +157,20 @@ fn response_to_responder(stub_response: HttpStubResponse) -> impl Responder {
             }
 
             builder.body(body.to_string())
+        },
+        HttpStubResponse::XmlResponse { code, headers, body, .. } => {
+            let has_content_type = headers.keys().any(|k| k.to_lowercase() == "content-type");
+            let mut builder = HttpResponse::build(StatusCode::from_u16(code).unwrap());
+
+            for (key, value) in headers.into_iter() {
+                builder.append_header((key, value));
+            }
+
+            if !has_content_type {
+                builder.content_type("application/xml");
+            }
+
+            builder.body(body)
         }
     }
 }

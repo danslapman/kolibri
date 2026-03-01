@@ -3,7 +3,7 @@ use crate::api::resolver::StubResolver;
 use crate::error::Error;
 use crate::misc::{Renderable, Substitute};
 use crate::model::*;
-use crate::model::persistent::HttpStubResponse;
+use crate::model::persistent::{HttpStubRequest, HttpStubResponse};
 use json_value_merge::Merge;
 use std::collections::HashMap;
 use persistent::State;
@@ -44,7 +44,14 @@ impl ExecHandler {
             "headers": with_headers
         });
 
+        let request_xml = match &stub.request {
+            HttpStubRequest::XmlRequest { .. } | HttpStubRequest::XPathRequest { .. } =>
+                body.extract_string(),
+            _ => None,
+        };
+
         stub.response.substitute(data.clone());
+        stub.response.substitute_xml(data.clone(), request_xml.as_deref());
 
         if let Some(mut persist_spec) = stub.persist {
             persist_spec.fill(data);
