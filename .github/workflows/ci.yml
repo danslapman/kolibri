@@ -15,7 +15,7 @@ jobs:
           - os: windows-latest
             artifact_name: kolibri.exe
             asset_name: kolibri.exe
-          - os: macos-13
+          - os: macos-15-intel
             artifact_name: kolibri
             asset_name: kolibri-mac
           - os: macos-latest
